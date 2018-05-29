@@ -2,7 +2,7 @@
 apiVersion: devops.alauda.io/v1alpha1
 kind: PipelineTemplate
 metadata:
-  name: alaudaBuildImage
+  name: zj-alaudaBuildImage
   annotations:
     alauda.io/displayName.zh-CN: 用户自定义构建
     alauda.io/displayName.en: Build docker image
