@@ -2,18 +2,18 @@
 apiVersion: devops.alauda.io/v1alpha1
 kind: PipelineTemplate
 metadata:
-  name: alaudaBuildImage
+  name: alaudaBuildImageAndDeployService
   annotations:
-    alauda.io/displayName.zh-CN: 用户自定义构建
-    alauda.io/displayName.en: Build docker image
-    alauda.io/description.zh-CN: 克隆代码并构建镜像
-    alauda.io/description.en: Clone code and builds a docker image
-    alauda.io/readme.zh-CN: 克隆代码并构建镜像
-    alauda.io/readme.en: Clone code and builds a docker image
-    alauda.io/version: v0.2
-    alauda.io/style.icon: build
+    alauda.io/displayName.zh-CN: 构建并更新服务
+    alauda.io/displayName.en: Build image and update service
+    alauda.io/description.zh-CN: 克隆代码并构建镜像然后更新服务
+    alauda.io/description.en: Clone code, build docker image and update a service
+    alauda.io/readme.zh-CN: 克隆代码并构建镜像然后更新服务
+    alauda.io/readme.en: Clone code, build docker image and update a service
+    alauda.io/version: v0.1
+    alauda.io/style.icon: buildUpdateService
   labels:
-    catgory: CI
+    catgory: CICD
 spec:
   engine: graph
   withSCM: true
@@ -26,6 +26,12 @@ spec:
       tasks:
         - name: BuildImage
           type: public/alaudaBuildImage
+          options:
+            timeout: 3600
+    - name: DeployService
+      tasks:
+        - name: DeployService
+          type: public/alaudaDeployService
           options:
             timeout: 3600
   arguments:
@@ -83,10 +89,12 @@ spec:
           display:
             type: string
             name:
-              zh-CN: "alaudaci.yaml 文件路径"
+              zh-CN: "alaudaci.yml 文件路径"
               en: "alaudaci.yml's path"
           required: false
           default: ./alaudaci.yml
+          validation:
+            pattern: .*\.yml$
           relation:
             - action: hidden
               when:
@@ -96,8 +104,6 @@ spec:
               when:
                 name: useYaml
                 value: true
-          validation:
-            pattern: .*\.yml$
         - name: "ciImage"
           schema:
             type: alauda.io/imagerepositorymix
@@ -107,7 +113,7 @@ spec:
             type: alauda.io/imagerepositorymix
             name:
               zh-CN: "CI镜像"
-              en: "CI image"
+              en: "CI Image"
           required: false
           relation:
             - action: hidden
@@ -180,6 +186,7 @@ spec:
             type: alauda.io/imagerepositorymix
           binding:
             - BuildImage.args.image
+            - DeployService.args.image
           display:
             type: alauda.io/imagerepositorymix
             name:
@@ -206,11 +213,15 @@ spec:
             type: string
           binding:
             - BuildImage.args.imageExtraTag
+            - DeployService.args.imageTag
           display:
             type: string
             name:
               zh-CN: "附加版本"
               en: "Auto generated tag"
+            description:
+              zh-CN: "将会使用该版本的镜像更新服务"
+              en: "Used to update service"
           required: false
         - name: imageRegistryCredentialsId
           schema:
@@ -236,4 +247,64 @@ spec:
               en: "Use image cache"
           default: true
           required: true
+    - displayName:
+        zh-CN: 更新服务 
+        en: Deploy Service
+      items:
+        - name: containerInfo
+          schema:
+            type: alauda.io/newk8scontainermix
+          binding:
+            - DeployService.args.containerInfo
+          display:
+            type: alauda.io/newk8scontainermix
+            name:
+              zh-CN: "容器"
+              en: "Container"
+          required: true
+        - name: command
+          schema:
+            type: string
+          binding:
+            - DeployService.args.command
+          display:
+            type: string
+            name:
+              zh-CN: "接入点"
+              en: "Entrypoint"
+          required: false
+        - name: args
+          schema:
+            type: string
+          binding:
+            - DeployService.args.args
+          display:
+            type: string
+            name:
+              zh-CN: "执行命令"
+              en: "Run Command"
+          required: false
+        - name: env
+          schema:
+            type: alauda.io/k8senv
+          binding:
+            - DeployService.args.env
+          display:
+            type: alauda.io/k8senv
+            name:
+              zh-CN: "环境变量"
+              en: "Environment variables"
+        - name: timeout
+          schema:
+            type: int
+          binding:
+            - DeployService.args.timeout
+          display:
+            type: int
+            name:
+              zh-CN: "超时时间（秒）"
+              en: "Timeout (s)"
+          required: true
+
+
 

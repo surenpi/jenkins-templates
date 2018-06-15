@@ -1,8 +1,7 @@
-
 apiVersion: devops.alauda.io/v1alpha1
 kind: PipelineTaskTemplate
 metadata:
-  name: alaudaBuildImage
+  name: alaudawithoutCI
   annotations:
     alauda.io/displayName.zh-CN: 构建
     alauda.io/displayName.en: BuildImage
@@ -10,7 +9,7 @@ metadata:
     alauda.io/description.en: BuildImage
     alauda.io/readme.zh-CN: 构建镜像
     alauda.io/readme.en: BuildImage
-    alauda.io/version: v0.1
+    alauda.io/version: v0.16
     alauda.io/style.icon: 
   labels:
     catgory: CI
@@ -22,15 +21,19 @@ spec:
         setDockerfileLocation("{{.dockerfilePath}}").
         setContextPath("{{.contextDir}}").
         setUseImageCache({{.useImageCache}}).
-        {{- if .useYaml}}
+        {{- if .CIEnbale}}
+        {{-if .useYaml}}
         withYaml("{{.ciYamlFile}}").
         {{- else}}
         withCIImage("{{.ciImage.registry}}/{{.ciImage.repository}}:{{.ciImageTag}}", "{{.ciImageRegistryCredentialsId}}"){
             sh '''{{.ciCommands}}'''
         }.
         {{- end}}
+        {{- end}}
         setImage("{{.image.registry}}/{{.image.repository}}:{{.imageTag}}").
+        {{- if .CIEnbale}}
         startBuild().
+        {{- end}}
         startBuildImage()
       image.withRegistry([
         credentialsId: "{{.imageRegistryCredentialsId}}",
@@ -57,7 +60,20 @@ spec:
           zh-CN: "构建路径"
           en: "path of build"
       required: true
-      default: ./
+      default: ./ 
+    - name: "CIEnbale"
+      schema:
+        type: boolean
+      display:
+        type: boolean
+        name:
+          zh-CN: "使用CI功能"
+          en: "Use CI function"
+        description:
+          zh-CN: "使用CI功能"
+          en: "use CI function"
+      default: true
+      required: true        
     - name: "useYaml"
       schema:
         type: boolean
@@ -70,6 +86,11 @@ spec:
           zh-CN: 若使用自定义YAML镜像，则会使用您在代码仓库的alaudaci.yml中指定的镜像作为持续集成的运行环境。
           en: If enabled with use yaml image build, we will use the alaudaci.yml file under your code repository as the environment configuration for CI.
       required: false
+      relation:
+        - action: hidden
+          when:
+            name: CIEnbale
+            value: false
     - name: "ciYamlFile"
       schema:
         type: string
@@ -87,6 +108,10 @@ spec:
           when:
             name: useYaml
             value: false
+        - action: hidden
+          when:
+            name: CIEnbale
+            value: false
     - name: "ciImage"
       schema:
         type: alauda.io/imagerepositorymix
@@ -100,6 +125,10 @@ spec:
         - action: hidden
           when:
             name: useYaml
+            value: true
+        - action: hidden
+          when:
+            name: CIEnbale
             value: true
     - name: "ciImageTag"
       schema:
@@ -116,6 +145,10 @@ spec:
           when:
             name: useYaml
             value: true
+        - action: hidden
+          when:
+            name: CIEnbale
+            value: true
     - name: "ciCommands"
       schema:
         type: string
@@ -129,6 +162,10 @@ spec:
         - action: hidden
           when:
             name: useYaml
+            value: true
+        - action: hidden
+          when:
+            name: CIEnbale
             value: true
     - name: "image"
       schema:
@@ -191,5 +228,4 @@ spec:
         name:
           zh-CN: "registry凭据"
           en: "registry credential"
-      required: false
-
+required: false
