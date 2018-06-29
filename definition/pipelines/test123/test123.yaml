@@ -3,7 +3,7 @@ kind: PipelineTemplate
 metadata:
   name: buildNodeApp1
   annotations:
-    alauda.io/displayName.zh-CN: 构建NodeAppasasasasdasfasdasfsadassfsafasdasfassfsa
+    alauda.io/displayName.zh-CN: 构建构建NODENODE
     alauda.io/displayName.en: Build NodeAppasasasasdasfasdasfsadassfsafasdasfassfasd
     alauda.io/description.zh-CN: 构建NodeApp
     alauda.io/description.en: Build NodeApp
