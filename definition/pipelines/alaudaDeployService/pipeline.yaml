@@ -1,35 +1,39 @@
-
 apiVersion: devops.alauda.io/v1alpha1
 kind: PipelineTemplate
 metadata:
-  name: wyzDeployService
+  name: alaudaDeployService
   annotations:
-    alauda.io/displayName.zh-CN: wyz更新服务
+    alauda.io/displayName.zh-CN: zj更新服务
     alauda.io/displayName.en: Update service
-    alauda.io/description.zh-CN: 更新服务
-    alauda.io/description.en: Update a service
-    alauda.io/readme.zh-CN: 更新服务
-    alauda.io/readme.en: Update a service
-    alauda.io/version: v0.2
+    alauda.io/description.zh-CN: 使用指定的镜像以及镜像版本等参数，更新指定集群的特定服务
+    alauda.io/description.en: Update a service using docker image
+    alauda.io/readme.zh-CN: 使用指定的镜像以及镜像版本等参数，更新指定集群的特定服务
+    alauda.io/readme.en: Update a service using docker image
+    alauda.io/version: v0.1
     alauda.io/style.icon: 
   labels:
-    catgory: CD
+    category: CICD
 spec:
   engine: graph
   withSCM: false
+  options:
+    timeout: 1800
   stages:
     - name: DeployService
       tasks:
         - name: DeployService
           type: public/alaudaDeployService
-          options:
-            timeout: 3600
+  values:
+    tasks:
+      DeployService:
+        args:
+          useServiceYaml: false
   arguments:
     - displayName:
         zh-CN: "基本信息"
         en: "Basic Info"
       items:
-        - name: containerInfo
+        - name: containerInfo 
           schema:
             type: alauda.io/newk8scontainermix
           binding:
@@ -39,6 +43,19 @@ spec:
             name:
               zh-CN: "容器"
               en: "Container"
+            description:
+              zh-CN: |
+                即将被更新的服务的容器,这里包含了一下字段
+                1. 集群名称，表示即将更新的服务容器所在的集群
+                2. 命名空间，表示即将更新的服务容器所在的集群的名空间
+                3. 服务名称，表示即将更新的服务容器所在的集群的服务名称
+                4. 容器名称，表示即将更新的服务容器的名称
+              en: |
+                The containers in the service which will be updated contain the following fields
+                1.  The cluster name in which the service will be updated
+                2.  The namespace in which the service will be updated
+                3.  The service name which will be updated
+                4.  The container name in the service which will be updated
           required: true
         - name: command
           schema:
@@ -50,6 +67,9 @@ spec:
             name:
               zh-CN: "接入点"
               en: "Entrypoint"
+            description:
+              zh-CN: "容器启动时执行的接入点，如果不指定，则使用原有服务接入点"
+              en: "Entrypoint of container, , using original service command if it is empty"
           required: false
         - name: args
           schema:
@@ -61,6 +81,9 @@ spec:
             name:
               zh-CN: "执行命令"
               en: "Run Command"
+            description:
+              zh-CN: "容器启动时执行的命令，如果不指定，则使用原有服务命令"
+              en: "Command of container, using original service command if it is empty"
           required: false
         - name: image
           schema:
@@ -72,7 +95,10 @@ spec:
             name:
               zh-CN: "更新使用的镜像仓库"
               en: "Image repository to use"
-          required: false
+            description:
+              zh-CN: "更新使用的镜像仓库, 如果使用yaml 来部署更新，则会自动更新该镜像对应的容器"
+              en: "Image repository to use"
+          required: true
         - name: "imageTag"
           schema:
             type: string
@@ -83,6 +109,9 @@ spec:
             name:
               zh-CN: "镜像版本"
               en: "Image tag"
+            description:
+              zh-CN: "更新服务时使用的镜像版本, 例如 latest"
+              en: "image tag"
           required: true
           default: latest
         - name: env
@@ -95,6 +124,35 @@ spec:
             name:
               zh-CN: "环境变量"
               en: "Environment variables"
+            description:
+              zh-CN: "环境变量"
+              en: "Environment variables"
+            related: containerInfo
+        - name: envFrom
+          schema:
+            type: array
+            items:
+              type: object
+          binding:
+            - DeployService.args.envFrom
+          display:
+            type: alauda.io/k8sconfigmap
+            name:
+              zh-CN: "ConfigMap"
+              en: "ConfigMap"
+            related: containerInfo
+        - name: autoRollbackOnFail
+          schema:
+            type: boolean
+          binding:
+            - DeployService.args.autoRollbackOnFail
+          display:
+            type: boolean
+            name:
+              zh-CN: 自动回滚
+              en: "Auto Rollback"
+          required: true
+          default: true
         - name: timeout
           schema:
             type: int
@@ -103,6 +161,9 @@ spec:
           display:
             type: int
             name:
+              zh-CN: "超时时间（秒）"
+              en: "Timeout (s)"
+            description:
               zh-CN: "超时时间（秒）"
               en: "Timeout (s)"
           required: true
