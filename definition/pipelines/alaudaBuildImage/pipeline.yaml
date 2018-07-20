@@ -442,7 +442,7 @@ spec:
           display:
             type: string
             name:
-              zh-CN: "附加版本"
+              zh-CN: "附加版本AAAs"
               en: "Auto generated tag"
             description:
               zh-CN: "附加镜像版本, 例如 代码提交版本号"
