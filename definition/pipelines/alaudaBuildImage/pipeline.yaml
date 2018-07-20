@@ -1,27 +1,42 @@
-
 apiVersion: devops.alauda.io/v1alpha1
 kind: PipelineTemplate
 metadata:
   name: alaudaBuildImage
   annotations:
-    alauda.io/displayName.zh-CN: 用户自定义构建
+    alauda.io/displayName.zh-CN: zj自定义构建
     alauda.io/displayName.en: Build docker image
-    alauda.io/description.zh-CN: 克隆代码并构建镜像
+    alauda.io/description.zh-CN: zj自定义构建镜像
     alauda.io/description.en: Clone code and builds a docker image
-    alauda.io/readme.zh-CN: 克隆代码并构建镜像
+    alauda.io/readme.zh-CN: zj自定义构建镜像
     alauda.io/readme.en: Clone code and builds a docker image
-    alauda.io/version: v0.2
+    alauda.io/version: v0.2.1
     alauda.io/style.icon: build
   labels:
-    catgory: CI
+    category: CICD
+    badges: scm,docker
 spec:
   engine: graph
   withSCM: true
+  agent:
+    label: docker
+  options:
+    timeout: 5400
   stages:
     - name: Clone
       tasks:
         - name: Clone
           type: public/clone
+    - name: CodeScan
+      tasks:
+        - name: CodeScan
+          type: public/alaudaCodeScan
+          options:
+            timeout: 7200
+          relation:
+            - action: show
+              when:
+                name: sonarScanEnabled
+                value: true
     - name: BuildImage
       tasks:
         - name: BuildImage
@@ -30,21 +45,165 @@ spec:
             timeout: 3600
   arguments:
     - displayName:
-        zh-CN: "基本信息"
-        en: "Basic Info"
+        zh-CN: 配置SonarQube代码扫描
+        en: SonarQube Code Scan Configuration
       items:
-        - name: "dockerfilePath"
+        - name: "sonarScanEnabled"
+          schema:
+            type: boolean
+          display:
+            type: boolean
+            name:
+              zh-CN: "是否开启代码扫描"
+              en: "Enable SonarQube Scan"
+            description:
+              zh-CN: 是否开启代码扫描
+              en: If Enable SonarQube Scan
+          required: false
+          default: false
+        - name: "integrationSonarQubeID"
           schema:
             type: string
           binding:
-            - BuildImage.args.dockerfilePath
+            - CodeScan.args.integrationSonarQubeID
+          display:
+            type: alauda.io/integration
+            args:
+              types: SonarQube
+            name:
+              zh-CN: "SonarQube集成实例"
+              en: "SonarQube Integration Instance"
+            description:
+              zh-CN: "SonarQube集成实例"
+              en: "SonarQube Integration Instance"
+          required: true
+          default: ""
+          relation:
+            - action: show
+              when:
+                name: sonarScanEnabled
+                value: true
+        - name: "qualityGate"
+          schema:
+            type: string
+          binding:
+            - CodeScan.args.qualityGate
+          display:
+            type: alauda.io/sonarqube/qualitygates
+            related: integrationSonarQubeID
+            name:
+              zh-CN: "SonarQube扫描质量阈"
+              en: "SonarQube Scan QualityGate"
+            description:
+              zh-CN: "SonarQube扫描质量阈"
+              en: "SonarQube Scan QualityGate"
+          required: false
+          default: ""
+          relation:
+            - action: show
+              when:
+                name: sonarScanEnabled
+                value: true
+        - name: "lang"
+          schema:
+            type: string
+          binding:
+            - CodeScan.args.lang
+          display:
+            type: alauda.io/sonarqube/lang
+            related: integrationSonarQubeID
+            name:
+              zh-CN: "项目开发语言"
+              en: "SonarQube Project Develop Language"
+            description:
+              zh-CN: "项目开发语言"
+              en: "SonarQube Project Develop Language"
+          required: false
+          default: ""
+          relation:
+            - action: show
+              when:
+                name: sonarScanEnabled
+                value: true
+        - name: "sonarContextDir"
+          schema:
+            type: string
+          binding:
+            - CodeScan.args.sonarContextDir
           display:
             type: string
             name:
-              zh-CN: "Dockerfile路径"
-              en: "Dockerfile's path"
+              zh-CN: "源码扫描路径"
+              en: "Sonar Scan Context Directory"
+            description:
+              zh-CN: "源码扫描路径"
+              en: "Sonar Scan Context Directory"
           required: true
-          default: ./
+          default: "."
+          relation:
+            - action: show
+              when:
+                name: sonarScanEnabled
+                value: true
+        - name: "propertiesPath"
+          schema:
+            type: string
+          binding:
+            - CodeScan.args.propertiesPath
+          display:
+            type: string
+            name:
+              zh-CN: "SonarQube配置文件路径"
+              en: "SonarQube Properties File Path"
+            description:
+              zh-CN: "SonarQube配置文件路径"
+              en: "SonarQube Properties File Path"
+          required: true
+          default: "./sonar-project.properties"
+          relation:
+            - action: show
+              when:
+                name: sonarScanEnabled
+                value: true
+        - name: "waitForQualityGate"
+          schema:
+            type: boolean
+          binding:
+            - CodeScan.args.waitForQualityGate
+          display:
+            type: boolean
+            name:
+              zh-CN: "是否等待扫描结果"
+              en: "Enable Wait QualityGate"
+            description:
+              zh-CN: 是否等待扫描结果
+              en: If Enable Wait QualityGat
+          required: false
+          default: false
+          relation:
+            - action: show
+              when:
+                name: sonarScanEnabled
+                value: true
+    - displayName:
+        zh-CN: "配置持续集成"
+        en: "CI Configuration"
+      items:
+        - name: "ciEnabled"
+          schema:
+            type: boolean
+          binding:
+            - BuildImage.args.ciEnabled
+          display:
+            type: boolean
+            name:
+              zh-CN: "开启持续集成"
+              en: "CIEnabled"
+            description:
+              zh-CN: 是否开启持续集成
+              en: CI enabled
+          required: true
+          default: true
         - name: "contextDir"
           schema:
             type: string
@@ -55,12 +214,16 @@ spec:
             name:
               zh-CN: "构建路径"
               en: "Build context"
+            description:
+              zh-CN: 构建命令的执行目录
+              en: Path of ci command executing
           required: true
           default: ./
-    - displayName:
-        zh-CN: "配置持续集成"
-        en: "CI Configuration"
-      items:
+          relation:
+            - action: show
+              when:
+                name: ciEnabled
+                value: true
         - name: "useYaml"
           schema:
             type: boolean
@@ -74,7 +237,33 @@ spec:
             description:
               zh-CN: 若使用自定义YAML镜像，则会使用您在代码仓库的alaudaci.yml中指定的镜像作为持续集成的运行环境。
               en: If enabled will use the alaudaci.yml file in the code repository to start a CI container.
+          required: true
+          default: true
+          relation:
+            - action: show
+              when:
+                name: ciEnabled
+                value: true
+        - name: ciImageRegistryCredentialsId
+          schema:
+            type: string
+          binding:
+            - BuildImage.args.ciImageRegistryCredentialsId
+          display:
+            type: alauda.io/jenkinscredentials
+            related: jenkins_integration_id
+            name:
+              zh-CN: "CI镜像：镜像中心凭据"
+              en: "CI image: Registry credentials"
+            description:
+              zh-CN: 用来执行构建的镜像的Registry凭据（用户名密码）
+              en: Credential of ci image registry
           required: false
+          relation:
+            - action: show
+              when:
+                name: ciEnabled
+                value: true
         - name: "ciYamlFile"
           schema:
             type: string
@@ -83,19 +272,21 @@ spec:
           display:
             type: string
             name:
-              zh-CN: "alaudaci.yaml 文件路径"
+              zh-CN: "alaudaci.yml 文件路径"
               en: "alaudaci.yml's path"
-          required: false
+            description:
+              zh-CN: alaudaci.yml 文件路径
+              en: Path of ci alaudaci.yml
+          required: true
           default: ./alaudaci.yml
           relation:
-            - action: hidden
-              when:
-                name: useYaml
-                value: false
             - action: show
               when:
-                name: useYaml
-                value: true
+                all:
+                  - name: ciEnabled
+                    value: true
+                  - name: useYaml
+                    value: true
           validation:
             pattern: .*\.yml$
         - name: "ciImage"
@@ -108,16 +299,18 @@ spec:
             name:
               zh-CN: "CI镜像"
               en: "CI image"
-          required: false
+            description:
+              zh-CN: 用来执行构建的镜像
+              en: Image to execute comand
+          required: true
           relation:
-            - action: hidden
-              when:
-                name: useYaml
-                value: true
             - action: show
               when:
-                name: useYaml
-                value: false
+                all:
+                  - name: ciEnabled
+                    value: true
+                  - name: useYaml
+                    value: false
         - name: "ciImageTag"
           schema:
             type: string
@@ -129,28 +322,18 @@ spec:
             name:
               zh-CN: "CI镜像Tag"
               en: "CI image tag"
-          required: false
+            description:
+              zh-CN: 用来执行构建的镜像的TAG
+              en: Tag of image to execute comand
+          required: true
           relation:
-            - action: hidden
-              when:
-                name: useYaml
-                value: true
             - action: show
               when:
-                name: useYaml
-                value: false
-        - name: ciImageRegistryCredentialsId
-          schema:
-            type: string
-          binding:
-            - BuildImage.args.ciImageRegistryCredentialsId
-          display:
-            type: alauda.io/jenkinscredentials
-            related: jenkins_integration_id
-            name:
-              zh-CN: "CI镜像：镜像中心凭据"
-              en: "CI image: Registry credentials"
-          required: false
+                all:
+                  - name: ciEnabled
+                    value: true
+                  - name: useYaml
+                    value: false
         - name: "ciCommands"
           schema:
             type: string
@@ -161,20 +344,57 @@ spec:
             name:
               zh-CN: "自定义命令"
               en: "CI commands"
-          required: false
+            description:
+              zh-CN: 执行构建过程中的自定义命令
+              en: ci commands
+          required: true
           relation:
-            - action: hidden
-              when:
-                name: useYaml
-                value: true
             - action: show
               when:
-                name: useYaml
-                value: false
+                all:
+                  - name: ciEnabled
+                    value: true
+                  - name: useYaml
+                    value: false
     - displayName:
         zh-CN: 配置镜像仓库 
         en: Image Repository Configuration
       items:
+        - name: "buildImageEnabled"
+          schema:
+            type: boolean
+          binding:
+            - BuildImage.args.buildImageEnabled
+          display:
+            type: boolean
+            name:
+              zh-CN: "生成镜像"
+              en: "Build Image"
+            description:
+              zh-CN: 是否生成镜像
+              en: Build Image
+          required: true
+          default: false
+        - name: "dockerfilePath"
+          schema:
+            type: string
+          binding:
+            - BuildImage.args.dockerfilePath
+          display:
+            type: string
+            name:
+              zh-CN: "Dockerfile路径"
+              en: "Dockerfile's path"
+            description:
+              zh-CN: Dockerfile的路径，不包含名称，例如当前目录./
+              en: Path of Dockerfile, eg ./
+          required: true
+          default: ./
+          relation:
+            - action: show
+              when:
+                name: buildImageEnabled
+                value: true
         - name: "image"
           schema:
             type: alauda.io/imagerepositorymix
@@ -186,9 +406,14 @@ spec:
               zh-CN: "镜像仓库"
               en: "Image repository"
             description:
-              zh: "构建生成的镜像"
+              zh-CN: "构建生成的镜像"
               en: "Image repository to store the built image"
           required: true
+          relation:
+            - action: show
+              when:
+                name: buildImageEnabled
+                value: true
         - name: "imageTag"
           schema:
             type: string
@@ -199,8 +424,16 @@ spec:
             name:
               zh-CN: "镜像版本"
               en: "Customized image tag"
+            description:
+              zh-CN: "镜像版本, 例如 latest"
+              en: "Customized image tag"
           default: "latest"
           required: true
+          relation:
+            - action: show
+              when:
+                name: buildImageEnabled
+                value: true
         - name: imageExtraTag
           schema:
             type: string
@@ -211,7 +444,15 @@ spec:
             name:
               zh-CN: "附加版本"
               en: "Auto generated tag"
+            description:
+              zh-CN: "附加镜像版本, 例如 代码提交版本号"
+              en: "extra image tag, eg. commitid"
           required: false
+          relation:
+            - action: show
+              when:
+                name: buildImageEnabled
+                value: true
         - name: imageRegistryCredentialsId
           schema:
             type: string
@@ -223,7 +464,15 @@ spec:
             name:
               zh-CN: "镜像中心凭据"
               en: "Registry credentials"
+            description:
+              zh-CN: "构建的目标镜像所在镜像中心的登录凭据"
+              en: "Credentials of target registry"
           required: false
+          relation:
+            - action: show
+              when:
+                name: buildImageEnabled
+                value: true
         - name: "useImageCache"
           schema:
             type: boolean
@@ -234,6 +483,13 @@ spec:
             name:
               zh-CN: "开启镜像缓存"
               en: "Use image cache"
+            description:
+              zh-CN: "开启镜像缓存"
+              en: "Use image cache"
           default: true
           required: true
-
+          relation:
+            - action: show
+              when:
+                name: buildImageEnabled
+                value: true
