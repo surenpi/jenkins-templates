@@ -71,10 +71,10 @@ spec:
             args:
               types: SonarQube
             name:
-              zh-CN: "SonarQube集成实例"
+              zh-CN: "SonarQube集成实例AA"
               en: "SonarQube Integration Instance"
             description:
-              zh-CN: "SonarQube集成实例"
+              zh-CN: "SonarQube集成实例AA"
               en: "SonarQube Integration Instance"
           required: true
           default: ""
@@ -92,10 +92,10 @@ spec:
             type: alauda.io/sonarqube/qualitygates
             related: integrationSonarQubeID
             name:
-              zh-CN: "SonarQube扫描质量阈"
+              zh-CN: "SonarQube扫描质量阈A2"
               en: "SonarQube Scan QualityGate"
             description:
-              zh-CN: "SonarQube扫描质量阈"
+              zh-CN: "SonarQube扫描质量阈A2"
               en: "SonarQube Scan QualityGate"
           required: false
           default: ""
@@ -113,10 +113,10 @@ spec:
             type: alauda.io/sonarqube/lang
             related: integrationSonarQubeID
             name:
-              zh-CN: "项目开发语言"
+              zh-CN: "项目开发语言A3"
               en: "SonarQube Project Develop Language"
             description:
-              zh-CN: "项目开发语言"
+              zh-CN: "项目开发语言A3"
               en: "SonarQube Project Develop Language"
           required: false
           default: ""
@@ -133,10 +133,10 @@ spec:
           display:
             type: string
             name:
-              zh-CN: "源码扫描路径"
+              zh-CN: "源码扫描路径A4"
               en: "Sonar Scan Context Directory"
             description:
-              zh-CN: "源码扫描路径"
+              zh-CN: "源码扫描路径A4"
               en: "Sonar Scan Context Directory"
           required: true
           default: "."
@@ -153,7 +153,7 @@ spec:
           display:
             type: string
             name:
-              zh-CN: "SonarQube配置文件路径"
+              zh-CN: "SonarQube配置文件路径A5"
               en: "SonarQube Properties File Path"
             description:
               zh-CN: "SonarQube配置文件路径"
@@ -173,7 +173,7 @@ spec:
           display:
             type: boolean
             name:
-              zh-CN: "是否等待扫描结果"
+              zh-CN: "是否等待扫描结果A6"
               en: "Enable Wait QualityGate"
             description:
               zh-CN: 是否等待扫描结果
@@ -186,7 +186,7 @@ spec:
                 name: sonarScanEnabled
                 value: true
     - displayName:
-        zh-CN: "配置持续集成"
+        zh-CN: "配置持续集成BB"
         en: "CI Configuration"
       items:
         - name: "ciEnabled"
@@ -197,7 +197,7 @@ spec:
           display:
             type: boolean
             name:
-              zh-CN: "开启持续集成"
+              zh-CN: "开启持续集成B1"
               en: "CIEnabled"
             description:
               zh-CN: 是否开启持续集成
@@ -462,7 +462,7 @@ spec:
             type: alauda.io/jenkinscredentials
             related: jenkins_integration_id
             name:
-              zh-CN: "镜像中心凭据"
+              zh-CN: "镜像中心凭据DD"
               en: "Registry credentials"
             description:
               zh-CN: "构建的目标镜像所在镜像中心的登录凭据"
